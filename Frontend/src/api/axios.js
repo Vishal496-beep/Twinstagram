@@ -10,26 +10,29 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // ✅ Check karo ki error.response exist karta hai ya nahi
-        if (error.response && error.response.status === 401 && !originalRequest._retry) {
+        // 🚨 CHECK: Agar error 401 hai AUR ye request pehle se refresh ya login ki nahi hai
+        if (
+            error.response && 
+            error.response.status === 401 && 
+            !originalRequest._retry &&
+            !originalRequest.url.includes("/login") && // Login par redirect mat karo
+            !originalRequest.url.includes("/refresh-token") // Refresh fail ho toh loop mat banao
+        ) {
             originalRequest._retry = true;
             try {
-                // Refresh token logic
                 await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/refresh-token`, {}, { withCredentials: true });
                 return api(originalRequest);
             } catch (err) {
-                window.location.href = "/login";
+                // Agar refresh fail ho jaye, toh bas login par bhejo
+                // Lekin check karo ki hum pehle se login page par toh nahi hain?
+                if (window.location.pathname !== "/login") {
+                    window.location.href = "/login";
+                }
             }
-        }
-
-        // Agar response nahi hai, toh ye Network error ho sakta hai
-        if (!error.response) {
-            console.error("Network Error: Check if your backend is running!");
         }
 
         return Promise.reject(error);
     }
-    
 );
 
 export default api;
