@@ -20,7 +20,7 @@ router.route("/login").post(upload.none(), loginUser);
 router.route("/logout").post(verifyJWT, logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/changePassword").post(verifyJWT, changeCurrentPassword)
-router.route("/currentUser").get(verifyJWT, getCurrentUser)
+router.route("/current-user").get(verifyJWT, getCurrentUser)
 router.route("/update-Details").patch(verifyJWT, updateAccountDetails)
 // user.routes.js
 router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
