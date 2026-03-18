@@ -177,7 +177,7 @@ let refreshAccessToken = asyncHandler( async (req, res) => {
     sameSite: 'none',  // Cross-domain cookie ke liye zaroori hai
 }
  
-     const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+     const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
  
      return res
      .status(200)
@@ -363,7 +363,7 @@ const getWatchHistory = asyncHandler( async (req, res) => {
         },
         {
             $lookup: {
-               from: "Videos",
+               from: "videos",
                localField: "watchHistory",
                foreignField: "_id",
                as: "watchHistory",
