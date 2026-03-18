@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL, // Your Port 3000
-    withCredentials: true, // Crucial for your Refresh Token logic
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true
 });
 
 api.interceptors.response.use(

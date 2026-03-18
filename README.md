@@ -57,6 +57,7 @@ The project follows the **MVC (Model-View-Controller)** pattern with a dedicated
 ---
 
 ## 📸 App Walkthrough  
+<<<<<<< HEAD
 
 | **Register** | **Login** |
 | :---: | :---: |
@@ -73,3 +74,25 @@ The project follows the **MVC (Model-View-Controller)** pattern with a dedicated
 
 1. **Clone the repository** ```bash
    git clone [https://github.com/vishal496-beep/Twinstagram.git](https://github.com/vishal496-beep/Twinstagram.git)
+=======
+
+| **Register Page** | **Login Page** |
+| :---: | :---: |
+| ![Register](https://github.com/Vishal496-beep/Twinstagram/blob/main/Frontend/src/screenshots/Register.png?raw=true) | ![Login](https://github.com/Vishal496-beep/Twinstagram/blob/main/Frontend/src/screenshots/Login.png?raw=true) |
+
+| **User Dashboard** | **User Profile** |
+| :---: | :---: |
+| ![Dashboard](https://github.com/Vishal496-beep/Twinstagram/blob/main/Frontend/src/screenshots/Dashboard.png?raw=true) | ![Profile](https://github.com/Vishal496-beep/Twinstagram/blob/main/Frontend/src/screenshots/Profile.png?raw=true) |
+
+| **Video Feed** | **Tweets Section** |
+| :---: | :---: |
+| ![Video](https://github.com/Vishal496-beep/Twinstagram/blob/main/Frontend/src/screenshots/video.png?raw=true) | ![Tweets](https://github.com/Vishal496-beep/Twinstagram/blob/main/Frontend/src/screenshots/Tweets.png?raw=true) |
+
+---
+
+## 🔧 Installation & Local Setup  
+
+1. **Clone the repository**
+   ```bash
+   git clone [https://github.com/vishal496-beep/Twinstagram.git](https://github.com/vishal496-beep/Twinstagram.git)
+>>>>>>> 8530095e2cacedbef000dd0e93256588ef5e72dc
