@@ -10,27 +10,27 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // 🚨 CHECK: Agar error 401 hai AUR ye request pehle se refresh ya login ki nahi hai
-        if (
-            error.response && 
-            error.response.status === 401 && 
-            !originalRequest._retry &&
-            !originalRequest.url.includes("/login") && // Login par redirect mat karo
-            !originalRequest.url.includes("/refresh-token") // Refresh fail ho toh loop mat banao
-        ) {
+        // Agar error 401 hai (Unauthorized)
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
+            
+            // 🛑 CRITICAL CHECK: Agar hum pehle se login ya refresh-token request kar rahe hain, toh loop mat banao
+            if (originalRequest.url.includes("/login") || originalRequest.url.includes("/refresh-token")) {
+                return Promise.reject(error);
+            }
+
             originalRequest._retry = true;
             try {
+                // Refresh token attempt
                 await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/refresh-token`, {}, { withCredentials: true });
                 return api(originalRequest);
             } catch (err) {
-                // Agar refresh fail ho jaye, toh bas login par bhejo
-                // Lekin check karo ki hum pehle se login page par toh nahi hain?
+                // Agar refresh bhi fail ho jaye aur hum login page par NAHI hain, tabhi redirect karo
                 if (window.location.pathname !== "/login") {
                     window.location.href = "/login";
                 }
+                return Promise.reject(err);
             }
         }
-
         return Promise.reject(error);
     }
 );
