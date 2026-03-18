@@ -106,9 +106,10 @@ let loginUser = asyncHandler( async (req, res) => {
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const options = {
-      httpOnly: true,
-       secure: true
-    }
+    httpOnly: true,
+    secure: true,      // HTTPS ke liye (Production)
+    sameSite: 'none',  // Cross-domain cookie ke liye zaroori hai
+}
 
     return res
     .status(200)
@@ -138,10 +139,11 @@ let logoutUser = asyncHandler( async (req, res) => {
           new: true
      }
 )
-     const options = {
-      httpOnly: true,
-      secure: true
-    }
+    const options = {
+    httpOnly: true,
+    secure: true,      // HTTPS ke liye (Production)
+    sameSite: 'none',  // Cross-domain cookie ke liye zaroori hai
+}
 
     return res
     .status(200)
@@ -169,10 +171,11 @@ let refreshAccessToken = asyncHandler( async (req, res) => {
       throw new ApiError(401, "refresh token is expired or used")
      }
  
-     const options = {
-       httpOnly: true,
-       secure: true
-     }
+    const options = {
+    httpOnly: true,
+    secure: true,      // HTTPS ke liye (Production)
+    sameSite: 'none',  // Cross-domain cookie ke liye zaroori hai
+}
  
      const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
  
