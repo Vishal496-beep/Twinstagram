@@ -62,7 +62,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onUpdateSuccess }) => {
         
         try {
             // 1. Update text details (fullname, bio)
-            const detailsRes = await api.patch("/users/update-account", {
+            const detailsRes = await api.patch("/users/update-Details", {
                 fullname: formData.fullname,
                 bio: formData.bio,
             });
@@ -78,15 +78,9 @@ const EditProfileModal = ({ isOpen, onClose, user, onUpdateSuccess }) => {
                 finalAvatar = avatarRes.data?.data?.avatar;
             }
 
-            // 3. Update Cover Image if changed
-            if (coverFile) {
-                const coverData = new FormData();
-                coverData.append("coverImage", coverFile);
-                const coverRes = await api.patch("/users/cover-image", coverData);
-                finalCover = coverRes.data?.data?.coverImage;
-            }
 
-            // 4. Update parent UI
+
+            // 3. Update parent UI
             if (onUpdateSuccess) {
                 onUpdateSuccess({
                     ...detailsRes.data.data,
