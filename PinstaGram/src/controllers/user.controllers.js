@@ -218,22 +218,25 @@ const getCurrentUser = asyncHandler( async (req, res) => {
 
 const updateAccountDetails = asyncHandler( async (req, res) => {
   const {fullname, email, username, bio} = req.body
-  if (!fullname && !email && !username && !bio) {
-     throw new ApiError(400, "All fields are required")
+  
+  // validation check - yahan maine username aur email ko optional rakha hai
+  if (!fullname && !bio) {
+     throw new ApiError(400, "At least one field (fullname or bio) is required")
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        fullname,
-        email,
-        username,
-        bio
+        fullname: fullname || req.user.fullname,
+        email: email || req.user.email,
+        username: username || req.user.username,
+        bio: bio || req.user.bio // Bio yahan update ho raha hai
       }
     },
     {new: true}
   ).select("-password")
+
   return res
   .status(200)
   .json(new ApiResponse(200, user, "Account details updated successfully"))
