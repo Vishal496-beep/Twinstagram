@@ -8,8 +8,7 @@ Twinstagram is a full-stack social media ecosystem that merges the best of video
 
 
 ## 🚀 Live Links
-- **Frontend:** [Link Paste Kar]
-- **Backend API:** [Link Paste Kar]
+- **:** [https://twinstagram-c5ko.onrender.com]
 
 ---
 
