@@ -36,7 +36,7 @@ const VideoDetails = () => {
 
         try {
             // Backend endpoint check karo: /subscriptions/c/:channelId
-            await api.post(`/subscriptions/c/${channelId}`);
+            await api.post(`/follow/c/${channelId}`);
             setIsSubscribed(prev => !prev);
         } catch (err) {
             console.error("Subscription error:", err);

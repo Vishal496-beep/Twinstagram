@@ -10,7 +10,7 @@ const VideoFeed = () => {
     useEffect(() => {
         const fetchVideos = async () => {
             try {
-                const res = await api.get("/"); 
+                const res = await api.get("/video"); 
                 // Handling aggregatePaginate structure safely
                 const fetchedVideos = res.data?.data?.docs || res.data?.data || [];
                 setVideos(fetchedVideos); 
