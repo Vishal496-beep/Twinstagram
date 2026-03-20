@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
 import CommentSection from "../components/CommentSection.jsx";
-import { ThumbsUp, Share2 } from "lucide-react";
+import { ThumbsUp, Share2, UserPlus, UserMinus } from "lucide-react"; // Icons add kiye
 
 const VideoDetails = () => {
     const { videoId } = useParams();
@@ -13,6 +13,9 @@ const VideoDetails = () => {
     const [loading, setLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
+    
+    // --- FOLLOW STATE ---
+    const [isSubscribed, setIsSubscribed] = useState(false);
 
     // Like handler logic
     const handleVideoLike = useCallback(async () => {
@@ -26,14 +29,27 @@ const VideoDetails = () => {
         }
     }, [videoId, isLiked]);
 
-    // Data Fetching logic (Single, clean useEffect)
+    // --- FOLLOW/UNFOLLOW HANDLER ---
+    const handleToggleSubscribe = async () => {
+        const channelId = video.ownerDetails?._id || video.owner;
+        if (!channelId) return;
+
+        try {
+            // Backend endpoint check karo: /subscriptions/c/:channelId
+            await api.post(`/subscriptions/c/${channelId}`);
+            setIsSubscribed(prev => !prev);
+        } catch (err) {
+            console.error("Subscription error:", err);
+            if(err.response?.status === 401) navigate("/login");
+        }
+    };
+
     useEffect(() => {
         let isMounted = true;
         
         const fetchAllData = async () => {
             try {
                 setLoading(true);
-                // Important: Reset video to null so the key triggers a fresh render
                 setVideo(null); 
 
                 const [videoRes, listRes] = await Promise.all([
@@ -46,6 +62,9 @@ const VideoDetails = () => {
                     setVideo(videoData);
                     setIsLiked(videoData.isLiked || false);
                     setLikesCount(videoData.likesCount || 0);
+                    
+                    // --- SET INITIAL FOLLOW STATUS ---
+                    setIsSubscribed(videoData.isSubscribed || false);
 
                     const allVideos = listRes.data.data.docs || [];
                     setSuggestions(allVideos.filter(v => v._id !== videoId));
@@ -58,16 +77,12 @@ const VideoDetails = () => {
         };
 
         fetchAllData();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [videoId]); 
 
     if (loading) return <div className="p-20 text-center animate-pulse text-zinc-500 font-black">LOADING VISION...</div>;
     if (!video) return <div className="p-10 text-white text-center">Vision not found.</div>;
 
-    // Safety check for owner details
     const owner = video.ownerDetails || video.owner || {};
 
     return (
@@ -75,7 +90,7 @@ const VideoDetails = () => {
             <div className="flex-1 min-w-0">
                 <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
                     <video 
-                        key={videoId} // Use videoId as key to force reset on navigation
+                        key={videoId} 
                         src={video?.videoFile} 
                         controls 
                         autoPlay 
@@ -97,11 +112,24 @@ const VideoDetails = () => {
                                 <h3 className="font-bold text-white">@{owner?.username || 'unknown'}</h3>
                                 <p className="text-[10px] text-zinc-500 uppercase font-black">Vision Creator</p>
                             </div>
-                            <button className="ml-4 bg-white text-black px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-transform active:scale-95">
-                                Subscribe
+
+                            {/* --- UPDATED DYNAMIC BUTTON --- */}
+                            <button 
+                                onClick={handleToggleSubscribe}
+                                className={`ml-4 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 ${
+                                    isSubscribed 
+                                    ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700" 
+                                    : "bg-white text-black hover:bg-zinc-200"
+                                }`}
+                            >
+                                {isSubscribed ? (
+                                    <><UserMinus size={14} /> Unfollow</>
+                                ) : (
+                                    <><UserPlus size={14} /> Follow</>
+                                )}
                             </button>
                         </div>
-
+                        {/* ... Rest of the code (Likes, Share, Comments) ... */}
                         <div className="flex items-center gap-2 bg-zinc-900/80 p-1.5 rounded-2xl border border-white/5">
                             <button 
                                 onClick={handleVideoLike}
@@ -129,11 +157,11 @@ const VideoDetails = () => {
                     </div>
 
                     <div className="mt-10">
-                        <CommentSection videoId={videoId} />
+                        <CommentSection id={videoId} type="video" />
                     </div>
                 </div>
             </div>
-
+            {/* ... Sidebar ... */}
             <aside className="w-full lg:w-96 space-y-5">
                 <h2 className="font-black uppercase text-[10px] tracking-widest text-zinc-500 mb-2">Up Next</h2>
                 {suggestions.map((item) => {
