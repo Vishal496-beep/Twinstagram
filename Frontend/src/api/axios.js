@@ -1,30 +1,36 @@
 import axios from "axios";
 
+// Yahan tumhara Render ka Backend URL aayega
+const BACKEND_URL = "https://twinstagram-c5ko.onrender.com/api/v1";
+
 const api = axios.create({
-  baseURL: "https://your-backend-url.onrender.com/api/v1",
-  withCredentials: true
+    baseURL: BACKEND_URL, 
+    withCredentials: true // Ye zaroori hai taaki Cookies (AccessToken/RefreshToken) transfer ho sakein
 });
 
+// Response Interceptor: Taaki agar token expire ho toh automatically refresh ho jaye
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Agar error 401 hai (Unauthorized)
+        // Agar backend 401 (Unauthorized) bhejta hai
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
             
-            // 🛑 CRITICAL CHECK: Agar hum pehle se login ya refresh-token request kar rahe hain, toh loop mat banao
+            // Login page ya refresh request par loop na bane isliye check
             if (originalRequest.url.includes("/login") || originalRequest.url.includes("/refresh-token")) {
                 return Promise.reject(error);
             }
 
             originalRequest._retry = true;
             try {
-                // Refresh token attempt
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/refresh-token`, {}, { withCredentials: true });
+                // Refresh token ke liye direct axios use karo taaki interceptor repeat na ho
+                await axios.post(`${BACKEND_URL}/users/refresh-token`, {}, { withCredentials: true });
+                
+                // Naye token ke saath purani request dobara try karo
                 return api(originalRequest);
             } catch (err) {
-                // Agar refresh bhi fail ho jaye aur hum login page par NAHI hain, tabhi redirect karo
+                // Agar refresh bhi fail ho gaya, toh seedha Login bhej do
                 if (window.location.pathname !== "/login") {
                     window.location.href = "/login";
                 }
