@@ -1,13 +1,14 @@
 import axios from "axios";
 
-// Yahan tumhara Render ka Backend URL aayega
-const BACKEND_URL = "https://twinstagram-c5ko.onrender.com/api/v1";
+// Yahan define karo variable ko sahi tarike se
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "https://twinstagram-c5ko.onrender.com/api/v1";
 
 const api = axios.create({
-    baseURL: BACKEND_URL, 
-    withCredentials: true // Ye zaroori hai taaki Cookies (AccessToken/RefreshToken) transfer ho sakein
+    baseURL: BACKEND_URL, // Ab ye error nahi dega
+    withCredentials: true 
 });
 
+// ... baaki interceptor ka code same rahega ...
 // Response Interceptor: Taaki agar token expire ho toh automatically refresh ho jaye
 api.interceptors.response.use(
     (response) => response,

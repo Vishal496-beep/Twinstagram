@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN, // Make sure this is "https://twinstagram-one.vercel.app"
+    origin: process.env.CORS_ORIGIN, // Ye ab https://twinstagram-one.vercel.app uthayega
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
