@@ -15,54 +15,54 @@ const VideoDetails = () => {
     const [likesCount, setLikesCount] = useState(0);
     const [isSubscribed, setIsSubscribed] = useState(false);
 
-    // --- FOLLOW/UNFOLLOW HANDLER ---
+    // --- FOLLOW/UNFOLLOW LOGIC ---
     const handleToggleSubscribe = async () => {
-        // Owner ID nikalne ka sabse safe tarika (Handling both populated and ID cases)
+        // ID nikalne ke saare raaste check karo
         const channelId = video.ownerDetails?._id || video.owner?._id || video.owner;
         
+        console.log("DEBUG: Attempting to follow channel:", channelId);
+
         if (!channelId) {
-            console.error("Owner ID missing!");
+            alert("Error: Creator ID not found!");
             return;
         }
 
         try {
-            // Optimistic UI Update: Turant icon change kar do
-            setIsSubscribed(prev => !prev);
+            // UI ko turant update karo (Optimistic)
+            setIsSubscribed(!isSubscribed);
 
             const response = await api.post(`/follow/c/${channelId}`);
-            
-            // Backend se confirmation lo (isFollowing true/false)
+            console.log("DEBUG: Follow API Response:", response.data);
+
+            // Backend se aane wala real status set karo
             if (response.data?.data) {
                 setIsSubscribed(response.data.data.isFollowing);
             }
         } catch (err) {
-            // Error aaye toh state wapas purani wali kar do
-            setIsSubscribed(prev => !prev);
-            console.error("Subscription error:", err);
-            if(err.response?.status === 401) {
-                alert("Please login to follow creators");
+            setIsSubscribed(!isSubscribed); // Error pe wapas purana state
+            console.error("DEBUG: Follow Error Details:", err.response || err);
+            
+            if (err.response?.status === 401) {
+                alert("Session expired. Please login again.");
                 navigate("/login");
             }
         }
     };
 
-    // Like handler logic
+    // --- LIKE LOGIC ---
     const handleVideoLike = useCallback(async () => {
-        if (!videoId) return;
         try {
-            setIsLiked(prev => !prev);
-            setLikesCount(prev => (isLiked ? prev - 1 : prev + 1));
+            setIsLiked(!isLiked);
+            setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
             await api.post(`/like/toggle/v/${videoId}`);
         } catch (err) {
-            setIsLiked(prev => !prev);
-            setLikesCount(prev => (isLiked ? prev + 1 : prev - 1));
+            setIsLiked(!isLiked);
+            setLikesCount(prev => isLiked ? prev + 1 : prev - 1);
             console.error("Like error:", err);
         }
     }, [videoId, isLiked]);
 
     useEffect(() => {
-        let isMounted = true;
-        
         const fetchAllData = async () => {
             try {
                 setLoading(true);
@@ -71,133 +71,94 @@ const VideoDetails = () => {
                     api.get("/video")
                 ]);
 
-                if (isMounted) {
-                    const videoData = videoRes.data.data;
-                    setVideo(videoData);
-                    
-                    // Initial states set karo jo backend se aa rahi hain
-                    setIsLiked(videoData.isLiked || false);
-                    setLikesCount(videoData.likesCount || 0);
-                    setIsSubscribed(videoData.isSubscribed || false);
+                const videoData = videoRes.data.data;
+                setVideo(videoData);
+                setIsLiked(videoData.isLiked || false);
+                setLikesCount(videoData.likesCount || 0);
+                setIsSubscribed(videoData.isSubscribed || false);
 
-                    const allVideos = listRes.data.data.docs || listRes.data.data || [];
-                    setSuggestions(allVideos.filter(v => v._id !== videoId));
-                }
+                const allVideos = listRes.data?.data?.docs || listRes.data?.data || [];
+                setSuggestions(allVideos.filter(v => v._id !== videoId));
             } catch (err) {
-                console.error("Error fetching data:", err);
+                console.error("Fetch Error:", err);
             } finally {
-                if (isMounted) setLoading(false);
+                setLoading(false);
             }
         };
-
         fetchAllData();
-        return () => { isMounted = false; };
-    }, [videoId]); 
+    }, [videoId]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse text-zinc-500 font-black tracking-tighter">LOADING VISION...</div>;
-    if (!video) return <div className="p-10 text-white text-center">Vision not found.</div>;
+    if (loading) return <div className="h-screen flex items-center justify-center bg-black text-white font-black italic">LOADING VISION...</div>;
+    if (!video) return <div className="p-10 text-center text-white">Video not found</div>;
 
     const owner = video.ownerDetails || video.owner || {};
 
     return (
-        <div key={videoId} className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto p-4 lg:p-8">
-            {/* Main Content */}
-            <div className="flex-1 min-w-0">
-                <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
-                    <video 
-                        key={video?.videoFile} 
-                        src={video?.videoFile} 
-                        controls 
-                        autoPlay 
-                        className="w-full h-full object-contain" 
-                    />
-                </div>
+        <div className="bg-black min-h-screen text-white p-4 lg:p-10">
+            <div className="max-w-7xl mx-auto flex flex-col lg:row gap-10 lg:flex-row">
+                
+                {/* Video Player & Info */}
+                <div className="flex-1">
+                    <div className="aspect-video bg-zinc-900 rounded-3xl overflow-hidden border border-white/10">
+                        <video src={video.videoFile} controls autoPlay className="w-full h-full" />
+                    </div>
 
-                <div className="mt-6">
-                    <h1 className="text-2xl font-black text-white leading-tight">{video?.title}</h1>
-                    
-                    <div className="flex flex-wrap items-center justify-between mt-6 pb-6 border-b border-zinc-800 gap-6">
-                        <div className="flex items-center gap-4">
-                            <img 
-                                src={owner?.avatar || `https://ui-avatars.com/api/?name=${owner?.username || 'U'}`} 
-                                className="w-12 h-12 rounded-full border border-zinc-700 object-cover" 
-                                alt="owner"
-                            />
-                            <div>
-                                <h3 className="font-bold text-white">@{owner?.username || 'unknown'}</h3>
-                                <p className="text-[10px] text-zinc-500 uppercase font-black">Vision Creator</p>
+                    <div className="mt-6">
+                        <h1 className="text-2xl font-black">{video.title}</h1>
+                        
+                        <div className="flex flex-wrap items-center justify-between mt-6 py-4 border-y border-white/5">
+                            <div className="flex items-center gap-4">
+                                <img src={owner.avatar} className="w-12 h-12 rounded-full object-cover border border-white/10" alt="avatar" />
+                                <div>
+                                    <p className="font-bold">@{owner.username}</p>
+                                    <p className="text-[10px] text-zinc-500 font-black uppercase">Creator</p>
+                                </div>
+                                
+                                {/* FOLLOW BUTTON */}
+                                <button 
+                                    onClick={handleToggleSubscribe}
+                                    className={`ml-4 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                                        isSubscribed ? "bg-zinc-800 text-zinc-400" : "bg-white text-black hover:scale-105"
+                                    }`}
+                                >
+                                    {isSubscribed ? <span className="flex items-center gap-2"><UserMinus size={14}/> Unfollow</span> : <span className="flex items-center gap-2"><UserPlus size={14}/> Follow</span>}
+                                </button>
                             </div>
 
-                            <button 
-                                onClick={handleToggleSubscribe}
-                                className={`ml-4 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 ${
-                                    isSubscribed 
-                                    ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700" 
-                                    : "bg-white text-black hover:bg-zinc-200 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-                                }`}
-                            >
-                                {isSubscribed ? (
-                                    <><UserMinus size={14} /> Unfollow</>
-                                ) : (
-                                    <><UserPlus size={14} /> Follow</>
-                                )}
-                            </button>
+                            <div className="flex items-center gap-4 bg-zinc-900 p-2 rounded-2xl">
+                                <button onClick={handleVideoLike} className={`flex items-center gap-2 px-4 py-1 rounded-xl ${isLiked ? "text-blue-500" : ""}`}>
+                                    <ThumbsUp size={20} fill={isLiked ? "currentColor" : "none"} /> {likesCount}
+                                </button>
+                                <button className="flex items-center gap-2 px-4 py-1"><Share2 size={20} /> Share</button>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-zinc-900/80 p-1.5 rounded-2xl border border-white/5">
-                            <button 
-                                onClick={handleVideoLike}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all text-xs font-bold ${
-                                    isLiked ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-400 hover:text-white'
-                                }`}
-                            >
-                                <ThumbsUp size={18} fill={isLiked ? "currentColor" : "none"} />
-                                {likesCount.toLocaleString()}
-                            </button>
-                            <div className="w-px h-5 bg-zinc-800" />
-                            <button className="flex items-center gap-2 px-5 py-2.5 text-zinc-400 hover:text-white text-xs font-bold">
-                                <Share2 size={18} /> Share
-                            </button>
+                        <div className="mt-6 p-6 bg-zinc-900/50 rounded-2xl border border-white/5">
+                            <p className="text-sm text-zinc-400">{video.description}</p>
                         </div>
-                    </div>
 
-                    <div className="mt-6 bg-zinc-900/40 p-6 rounded-3xl border border-white/5">
-                        <div className="flex gap-3 font-black text-[11px] mb-3 text-zinc-500 uppercase tracking-tighter">
-                            <span>{video?.views?.toLocaleString()} views</span>
-                            <span>•</span>
-                            <span>{video?.createdAt ? new Date(video.createdAt).toDateString() : ''}</span>
+                        <div className="mt-10">
+                            <CommentSection videoId={videoId} />
                         </div>
-                        <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">{video?.description}</p>
-                    </div>
-
-                    <div className="mt-10">
-                        <CommentSection videoId={videoId} />
                     </div>
                 </div>
+
+                {/* Sidebar */}
+                <aside className="lg:w-80 space-y-4">
+                    <p className="text-[10px] font-black uppercase text-zinc-500">Up Next</p>
+                    {suggestions.map(v => (
+                        <div key={v._id} onClick={() => navigate(`/v/${v._id}`)} className="flex gap-3 cursor-pointer group">
+                            <div className="w-32 h-20 bg-zinc-800 rounded-lg overflow-hidden shrink-0">
+                                <img src={v.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition" alt="thumb" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold line-clamp-2">{v.title}</p>
+                                <p className="text-[10px] text-zinc-500 mt-1">@{v.owner?.username || v.ownerDetails?.username}</p>
+                            </div>
+                        </div>
+                    ))}
+                </aside>
             </div>
-
-            {/* Sidebar (Up Next) */}
-            <aside className="w-full lg:w-96 space-y-5">
-                <h2 className="font-black uppercase text-[10px] tracking-widest text-zinc-500 mb-2">Up Next</h2>
-                {suggestions.map((item) => {
-                    const sOwner = item.ownerDetails || item.owner;
-                    return (
-                        <div 
-                            key={item._id} 
-                            onClick={() => navigate(`/v/${item._id}`)} 
-                            className="flex gap-3 cursor-pointer group"
-                        >
-                            <div className="w-40 aspect-video rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/5">
-                                <img src={item.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={item.title} />
-                            </div>
-                            <div className="py-1 min-w-0">
-                                <h3 className="text-xs font-bold text-white line-clamp-2 group-hover:text-indigo-400 transition-colors">{item.title}</h3>
-                                <p className="text-[10px] text-zinc-500 font-bold mt-1 truncate">@{sOwner?.username || 'Creator'}</p>
-                            </div>
-                        </div>
-                    );
-                })}
-            </aside>
         </div>
     );
 };
